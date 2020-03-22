@@ -37,6 +37,7 @@ public:
 	Photo(string file_path);
 
 	void filter_negative();
+	void filter_threshold(int level);
 	void save_file(string file_path);
 	~Photo();
 
@@ -55,14 +56,15 @@ private:
 	void load_pixels(ifstream* input, int row_counter, int column_counter, string current_line) const;
 
 	// Pixel filter methods
-	int Photo::negative(int value);
+	int negative(int value);
+	int threshold(int value, int level);
 };
 
 int main()
 {
 	string my_path = MY_PATH;
 	auto photo = new Photo(my_path);
-	photo->filter_negative();
+	photo->filter_threshold(90);
 
 	photo->save_file(OUTPUT_PATH);
 	delete photo;
@@ -123,6 +125,14 @@ void Photo::filter_negative()
 	for (int i = 0; i < image_pixels_->size(); i++)
 	{
 		image_pixels_->at(i)->value = negative(image_pixels_->at(i)->value);
+	}
+}
+
+void Photo::filter_threshold(int level)
+{
+	for (int i = 0; i < image_pixels_->size(); i++)
+	{
+		image_pixels_->at(i)->value = threshold(image_pixels_->at(i)->value, level);
 	}
 }
 
@@ -210,6 +220,16 @@ void Photo::load_pixels(ifstream* input, int row_counter, int column_counter, st
 int Photo::negative(int value)
 {
 	return max_gray_value_ - value;
+}
+
+int Photo::threshold(int value, int level)
+{
+	if (value > level)
+	{
+		return max_gray_value_;
+	}
+
+	return 0;
 }
 
 void Photo::load_image(const string file_path)
