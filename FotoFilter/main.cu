@@ -8,6 +8,7 @@
 #include <fstream>
 #include <functional>
 #include <vector>
+#include <cmath>
 
 using std::string;
 using std::cout;
@@ -20,6 +21,7 @@ using std::stoi;
 using std::pair;
 using std::mem_fun_ref;
 using std::ofstream;
+using std::pow;
 
 #define P2_FILE "P2"
 #define MY_PATH "C:\\lena.ascii.pgm"
@@ -40,6 +42,7 @@ public:
 	void filter_threshold(int level);
 	void filter_black_threshold(int level);
 	void filter_white_threshold(int level);
+	void filter_gamma(double level);
 	void save_file(string file_path);
 	~Photo();
 
@@ -58,10 +61,11 @@ private:
 	void load_pixels(ifstream* input, int row_counter, int column_counter, string current_line) const;
 
 	// Pixel filter methods
-	int negative(int value);
-	int threshold(int value, int level);
-	int black_threshold(int value, int level);
-	int white_threshold(int value, int level);
+	int negative(int value) const;
+	int threshold(int value, int level) const;
+	int black_threshold(int value, int level) const;
+	int white_threshold(int value, int level) const;
+	int gamma(int value, double level) const;
 };
 
 int main()
@@ -156,6 +160,14 @@ void Photo::filter_white_threshold(int level)
 	}
 }
 
+void Photo::filter_gamma(double level)
+{
+	for (int i = 0; i < image_pixels_->size(); i++)
+	{
+		image_pixels_->at(i)->value = gamma(image_pixels_->at(i)->value, level);
+	}
+}
+
 void Photo::save_file(string file_path)
 {
 	ofstream processed_file(file_path);
@@ -237,12 +249,12 @@ void Photo::load_pixels(ifstream* input, int row_counter, int column_counter, st
 	}
 }
 
-int Photo::negative(int value)
+int Photo::negative(int value) const
 {
 	return max_gray_value_ - value;
 }
 
-int Photo::threshold(int value, int level)
+int Photo::threshold(int value, int level) const
 {
 	if (value > level)
 	{
@@ -252,7 +264,7 @@ int Photo::threshold(int value, int level)
 	return 0;
 }
 
-int Photo::black_threshold(int value, int level)
+int Photo::black_threshold(int value, int level) const
 {
 	if (value > level)
 	{
@@ -262,7 +274,7 @@ int Photo::black_threshold(int value, int level)
 	return 0;
 }
 
-int Photo::white_threshold(int value, int level)
+int Photo::white_threshold(int value, int level) const
 {
 	if (value > level)
 	{
@@ -270,6 +282,11 @@ int Photo::white_threshold(int value, int level)
 	}
 
 	return value;
+}
+
+int Photo::gamma(int value, double level) const
+{
+	return pow( (static_cast<double>(value) / static_cast<double>(max_gray_value_)), 1.0 / level) * max_gray_value_;
 }
 
 void Photo::load_image(const string file_path)
