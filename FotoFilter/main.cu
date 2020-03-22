@@ -38,6 +38,7 @@ public:
 
 	void filter_negative();
 	void filter_threshold(int level);
+	void filter_black_threshold(int level);
 	void save_file(string file_path);
 	~Photo();
 
@@ -58,6 +59,7 @@ private:
 	// Pixel filter methods
 	int negative(int value);
 	int threshold(int value, int level);
+	int black_threshold(int value, int level);
 };
 
 int main()
@@ -133,6 +135,14 @@ void Photo::filter_threshold(int level)
 	for (int i = 0; i < image_pixels_->size(); i++)
 	{
 		image_pixels_->at(i)->value = threshold(image_pixels_->at(i)->value, level);
+	}
+}
+
+void Photo::filter_black_threshold(int level)
+{
+	for (int i = 0; i < image_pixels_->size(); i++)
+	{
+		image_pixels_->at(i)->value = black_threshold(image_pixels_->at(i)->value, level);
 	}
 }
 
@@ -227,6 +237,16 @@ int Photo::threshold(int value, int level)
 	if (value > level)
 	{
 		return max_gray_value_;
+	}
+
+	return 0;
+}
+
+int Photo::black_threshold(int value, int level)
+{
+	if (value > level)
+	{
+		return value;
 	}
 
 	return 0;
