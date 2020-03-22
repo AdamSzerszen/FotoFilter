@@ -19,9 +19,11 @@ using std::vector;
 using std::stoi;
 using std::pair;
 using std::mem_fun_ref;
+using std::ofstream;
 
 #define P2_FILE "P2"
 #define MY_PATH "C:\\lena.ascii.pgm"
+#define OUTPUT_PATH "updated_lena.pgm"
 
 void remove_empty_strings(vector<string>& strings);
 size_t split(const string& text, vector<string>& parameters, char separator);
@@ -33,10 +35,9 @@ class Photo
 {
 public:
 	Photo(string file_path);
-	void load_image_size(ifstream* input);
-	void load_max_gray(ifstream* input);
-	void add_pixel(int row_counter, int column_counter, vector<std::basic_string<char>>* image_row, int i) const;
-	void load_pixels(ifstream* input, int row_counter, int column_counter, string current_line) const;
+
+	void filter_negative();
+	void save_file(string file_path);
 	~Photo();
 
 private:
@@ -46,14 +47,24 @@ private:
 	int max_gray_value_;
 	string image_comment_;
 
+	// Loading image
 	void load_image(const string file_path);
+	void load_image_size(ifstream* input);
+	void load_max_gray(ifstream* input);
+	void add_pixel(int row_counter, int column_counter, vector<std::basic_string<char>>* image_row, int i) const;
+	void load_pixels(ifstream* input, int row_counter, int column_counter, string current_line) const;
+
+	// Pixel filter methods
+	int Photo::negative(int value);
 };
 
 int main()
 {
 	string my_path = MY_PATH;
 	auto photo = new Photo(my_path);
+	photo->filter_negative();
 
+	photo->save_file(OUTPUT_PATH);
 	delete photo;
 	return 0;
 }
@@ -107,6 +118,44 @@ Photo::Photo(string file_path)
 	load_image(file_path);
 }
 
+void Photo::filter_negative()
+{
+	for (int i = 0; i < image_pixels_->size(); i++)
+	{
+		image_pixels_->at(i)->value = negative(image_pixels_->at(i)->value);
+	}
+}
+
+void Photo::save_file(string file_path)
+{
+	ofstream processed_file(file_path);
+
+	processed_file << P2_FILE << "\n";
+	processed_file << image_comment_ << "\n";
+	processed_file << width_ << "  " << height_ << "\n";
+	processed_file << max_gray_value_ << "\n";
+
+	int current_row = 0;
+	
+	for (int i = 0; i < image_pixels_->size(); i++)
+	{
+		auto current_pixel = image_pixels_->at(i);
+
+		if (current_pixel->coordinates->y != current_row)
+		{
+			current_row++;
+			processed_file << "\n";
+		} else
+		{
+			processed_file << " ";
+		}
+		processed_file << current_pixel->value << " ";
+	}
+
+	processed_file << "\n";
+	processed_file.close();
+}
+
 void Photo::load_image_size(ifstream* input)
 {
 	string size_line;
@@ -129,7 +178,7 @@ void Photo::add_pixel(int row_counter, int column_counter, vector<std::basic_str
 {
 	const auto current_pixel = new pixel();
 	const auto coords = new coordinates();
-					
+
 	coords->x = column_counter;
 	coords->y = row_counter;
 
@@ -156,6 +205,11 @@ void Photo::load_pixels(ifstream* input, int row_counter, int column_counter, st
 		image_row->clear();
 		delete image_row;
 	}
+}
+
+int Photo::negative(int value)
+{
+	return max_gray_value_ - value;
 }
 
 void Photo::load_image(const string file_path)
